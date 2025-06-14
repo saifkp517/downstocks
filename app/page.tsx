@@ -1,7 +1,12 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import React, { useState, useEffect, useRef } from "react";
+import { GeistSans } from "geist/font/sans";
+import SignIn from "@/components/SignIn"
 import {
   TrendingUp,
   BarChart3,
@@ -14,76 +19,260 @@ import {
   Twitter,
   Linkedin,
   Search,
+  X,
+  Menu
 } from "lucide-react"
 
 export default function DownstocksLanding() {
+
+
+  const [dots, setDots] = useState<Array<{ id: number; x: number; y: number; opacity: number; size: number }>>([]);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
+
+  //navbar scroll animation
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const screenHeight = window.innerHeight;
+      setScrolled(scrollY > screenHeight / 2);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Generate dynamic dots
+  useEffect(() => {
+    const generateDots = () => {
+      if (!sectionRef.current) return;
+      const section = sectionRef.current.getBoundingClientRect();
+      const spacing = 50;
+      const cols = Math.ceil(section.width / spacing);
+      const rows = Math.ceil(section.height / spacing);
+      const newDots = [];
+
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          newDots.push({
+            id: i * rows + j,
+            x: i * spacing + Math.random() * 8 - 4,
+            y: j * spacing + Math.random() * 8 - 4,
+            opacity: Math.random() * 0.4 + 0.2,
+            size: Math.random() * 3 + 1.5,
+          });
+        }
+      }
+      setDots(newDots);
+    };
+
+    // Debounce resize handler
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+    const debouncedGenerateDots = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(generateDots, 200);
+    };
+
+    generateDots();
+    window.addEventListener('resize', debouncedGenerateDots);
+
+    // Animate dots
+    const interval = setInterval(() => {
+      setDots(prevDots =>
+        prevDots.map(dot => ({
+          ...dot,
+          opacity: Math.random() * 0.5 + 0.1,
+          size: Math.random() * 3 + 1,
+        }))
+      );
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('resize', debouncedGenerateDots);
+      clearTimeout(resizeTimeout);
+      clearInterval(interval);
+    };
+  }, []);
+
+
+  const [inputValue, setInputValue] = useState<string>("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className={`min-h-screen bg-black text-white ${GeistSans.className}`} >
       {/* Navigation */}
-      <nav className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">Downstocks AI</span>
+
+      {/* Hovering SignIn */}
+      {showSignIn && (
+        <div onClick={() => setShowSignIn(false)} className="fixed inset-0 z-[200] flex items-center justify-center backdrop-blur-lg">
+          <div className="rounded-xl mx-24">
+            <SignIn />
+          </div>
+        </div>
+      )}
+
+
+      <nav
+        className={`border border-gray-900 rounded-xl backdrop-blur-sm transition-all duration-500 sticky z-[110] mx-auto 
+        ${scrolled ? 'top-4 max-w-6xl' : 'top-2 max-w-full'} 
+        px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 flex justify-center items-center`}
+      >
+        <div className="flex flex-col items-center w-full gap-4 sm:flex-row sm:justify-between sm:gap-6 max-w-7xl">
+          {/* Logo */}
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
-              <div className="hidden md:flex space-x-6">
-                <a href="#" className="text-slate-300 hover:text-white transition-colors">
-                  Home
-                </a>
-                <a href="#" className="text-slate-300 hover:text-white transition-colors">
-                  Live Charts
-                </a>
-                <a href="#" className="text-slate-300 hover:text-white transition-colors">
-                  Open Source
-                </a>
-                <a href="#" className="text-slate-300 hover:text-white transition-colors">
-                  Pricing
-                </a>
-              </div>
+              <span className="sm:text-sm md:text-md lg:text-lg font-bold">Downstocks AI</span>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white">Get Started</Button>
+            {/* Hamburger Menu Button */}
+            <button
+              className="sm:hidden text-slate-300 hover:text-white"
+              onClick={toggleMenu}
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Nav Links */}
+          <div
+            className={`${isMenuOpen ? 'flex' : 'hidden'
+              } sm:flex flex-col items-center gap-2 sm:flex-row sm:gap-4 md:gap-6 w-full sm:w-auto transition-all duration-300`}
+          >
+            <a
+              href="#"
+              className="text-slate-300 hover:text-white transition-colors px-3 py-1.5 text-sm sm:text-base sm:px-4 sm:py-2 border border-gray-800 rounded-2xl w-full sm:w-auto text-center"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Home
+            </a>
+            <a
+              href="#"
+              className="text-slate-300 hover:text-white transition-colors px-3 py-1.5 text-sm sm:text-base sm:px-4 sm:py-2 w-full sm:w-auto text-center"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Live Charts
+            </a>
+            <a
+              href="#"
+              className="text-slate-300 hover:text-white transition-colors px-3 py-1.5 text-sm sm:text-base sm:px-4 sm:py-2 w-full sm:w-auto text-center"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Open Source
+            </a>
+          </div>
+
+          {/* Get Started */}
+          <div className="flex-shrink-0">
+            <button
+              onClick={() => (window.location.href = '/signin')}
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-3xl px-4 py-1.5 text-sm sm:text-base sm:px-6 sm:py-2 w-full sm:w-auto"
+            >
+              Get Started
+            </button>
           </div>
         </div>
       </nav>
 
+
       {/* Combined Hero and Demo Section */}
-      <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section
+        ref={sectionRef}
+        className="pt-56 pb-16 px-4 sm:px-6 lg:px-8 relative"
+      >
+        {/* Dot Background */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          {dots.map((dot) => (
+            <div
+              key={dot.id}
+              className="absolute rounded-full bg-purple-400 animate-pulse-slow"
+              style={{
+                left: `${dot.x}px`,
+                top: `${dot.y}px`,
+                width: `${dot.size}px`,
+                height: `${dot.size}px`,
+                opacity: dot.opacity,
+                boxShadow: `0 0 ${dot.size * 2}px hsl(var(--primary)/0.3)`,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="max-w-5xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 gap-12 items-center">
             {/* Left side - Content */}
-            <div>
-              <Badge variant="secondary" className="mb-6 bg-purple-900/30 text-purple-300 border-purple-700">
-                AI-POWERED TRADING
-              </Badge>
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                Downstocks, your AI Trader.
+            <div className="text-center">
+              <div className="flex justify-center">
+                <Badge
+                  variant="secondary"
+                  className="py-2 px-4 mb-8 bg-purple-900/30 text-purple-300 hover:text-purple-100 text-md"
+                >
+                  AI-POWERED TRADING
+                </Badge>
+              </div>
+              <h1 className="text-5xl md:text-6xl font-medium tracking-tighter mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                <span className="text-purple-500 relative">
+                  <span
+                    className="absolute inset-0 blur-md opacity-50 pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, #a78bfa 0%, transparent 70%)' }}
+                    aria-hidden="true"
+                  />
+                  <span className="relative z-10">Downstocks</span>
+                </span>
+                , your AI Trader.
               </h1>
-              <p className="text-xl text-slate-400 mb-8">
-                Downstocks by Kortix AI is a generative AI Agent that acts on your behalf in financial markets. Simply
-                prompt what you want to trade, and our AI handles the rest.
+              <p className="text-xl text-slate-400 mb-8 font-medium">
+                Downstocks by Kortix AI is a generative AI Agent that acts on your behalf in financial markets. Simply prompt
+                what you want to trade, and our AI handles the rest.
               </p>
 
               {/* Search Bar */}
-              <div className="relative max-w-md mb-8">
+              <div className="relative max-w-2xl mb-8 mx-auto flex justify-center">
                 <Input
                   placeholder="Buy 100 shares of AAPL when it drops 5%"
-                  className="bg-slate-900 border-slate-700 text-white placeholder-slate-500 pr-12 h-12 rounded-xl"
+                  className="bg-transparent border-slate-700 text-white placeholder-slate-500 px-6 py-8 rounded-2xl focus:border-purple-800 focus:ring-0 focus:outline-none"
+                  style={{ boxShadow: 'none' }}
+                  onFocus={(e) => {
+                    e.currentTarget.classList.add('border-purple-800');
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.classList.remove('border-purple-800');
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  value={inputValue || ''}
                 />
-                <Button size="icon" className="absolute right-1 top-1 h-10 w-10 bg-purple-600 hover:bg-purple-700">
+                <Button
+                  size="icon"
+                  className={`absolute right-1 top-1/2 mr-2 -translate-y-1/2 h-10 w-10 ${inputValue ? 'bg-purple-500 hover:bg-purple-600' : 'bg-slate-800 hover:bg-slate-900'
+                    } transition-colors`}
+                  disabled={!inputValue}
+                  onClick={() => setShowSignIn(true)}
+                  style={{ transform: 'translateY(-50%)' }}
+                >
                   <Search className="w-4 h-4" />
                 </Button>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col justify-center sm:flex-row gap-4">
                 <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                   Start Trading Now
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                <Button
+                  variant="outline"
+                  className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                >
                   Watch Demo
                   <Play className="w-4 h-4 ml-2" />
                 </Button>
@@ -134,6 +323,20 @@ export default function DownstocksLanding() {
             </div>
           </div>
         </div>
+
+        {/* Custom Animations */}
+        <style jsx>{`
+        @keyframes pulse-slow {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.3;
+          }
+          50% {
+            transform: scale(1.3);
+            opacity: 0.6;
+          }
+        }
+      `}</style>
       </section>
 
       {/* Stats Section */}
@@ -381,23 +584,23 @@ export default function DownstocksLanding() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <footer className="border-t border-slate-800 py-12 px-4 sm:px-6 lg:px-8 min-h-[50vh]">
+        <div className="max-w-7xl mx-auto text-base md:text-lg">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold">Downstocks AI</span>
+                <span className="text-xl md:text-2xl font-bold">Downstocks AI</span>
               </div>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-400 text-sm md:text-base">
                 Downstocks by Kortix AI is a generative AI Agent that acts on your behalf in financial markets.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-slate-400 text-sm">
+              <h4 className="font-semibold mb-4 text-lg">Product</h4>
+              <ul className="space-y-2 text-slate-400 text-sm md:text-base">
                 <li>
                   <a href="#" className="hover:text-white transition-colors">
                     Features
@@ -421,8 +624,8 @@ export default function DownstocksLanding() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Resources</h4>
-              <ul className="space-y-2 text-slate-400 text-sm">
+              <h4 className="font-semibold mb-4 text-lg">Resources</h4>
+              <ul className="space-y-2 text-slate-400 text-sm md:text-base">
                 <li>
                   <a href="#" className="hover:text-white transition-colors">
                     Blog
@@ -446,8 +649,8 @@ export default function DownstocksLanding() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-slate-400 text-sm">
+              <h4 className="font-semibold mb-4 text-lg">Legal</h4>
+              <ul className="space-y-2 text-slate-400 text-sm md:text-base">
                 <li>
                   <a href="#" className="hover:text-white transition-colors">
                     Privacy Policy
@@ -472,20 +675,21 @@ export default function DownstocksLanding() {
             </div>
           </div>
           <div className="border-t border-slate-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-slate-400 text-sm">© 2024 Kortix AI. All rights reserved.</p>
+            <p className="text-slate-400 text-sm md:text-base">© 2024 Kortix AI. All rights reserved.</p>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                <Twitter className="w-5 h-5" />
+                <Twitter className="w-6 h-6" />
               </a>
               <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                <Github className="w-5 h-5" />
+                <Github className="w-6 h-6" />
               </a>
               <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                <Linkedin className="w-5 h-5" />
+                <Linkedin className="w-6 h-6" />
               </a>
             </div>
           </div>
         </div>
+
       </footer>
     </div>
   )
