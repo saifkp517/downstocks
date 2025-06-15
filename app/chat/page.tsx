@@ -1,26 +1,15 @@
 "use client";
 
-import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Plus,
   X,
-  Paperclip,
-  Mic,
-  ArrowUp,
-  MoreHorizontal,
-  BarChart3,
-  Rocket,
-  Camera,
-  RefreshCw,
   FileText,
   Monitor,
   Eye,
   Code,
-  AlertTriangle,
-  ChevronDown,
-  Maximize2,
-  Minimize2
 } from 'lucide-react';
+import Sidebar from '@/components/SideBar';
+import { InputBar } from '@/components/InputBar';
 
 interface Message {
   id: string;
@@ -39,89 +28,6 @@ interface ChatSession {
 }
 
 // InputBar component (uncontrolled, memoized)
-const InputBar = memo(({ handleSendMessage }: { handleSendMessage: (value: string) => void }) => {
-
-  const [selectedModel, setSelectedModel] = useState('Model 1');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const handleModelSelect = useCallback((model: string) => {
-    setSelectedModel(model);
-    // Add logic to update the AI model if needed
-  }, []);
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.repeat && inputRef.current?.value.trim()) {
-      e.preventDefault();
-      handleSendMessage(inputRef.current.value);
-      inputRef.current.value = '';
-      inputRef.current.focus();
-    }
-  };
-
-  const handleButtonClick = () => {
-    if (inputRef.current?.value.trim()) {
-      handleSendMessage(inputRef.current.value);
-      inputRef.current.value = '';
-      inputRef.current.focus();
-    }
-  };
-
-  return (
-    <div className="relative w-full max-w-4xl mx-auto">
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="trade AAPL shares..."
-        onKeyDown={handleKeyDown}
-        className="w-full bg-stone-900 border border-stone-800 rounded-2xl px-6 py-5 pr-80 text-white placeholder-stone-600 focus:outline-none focus:border-stone-700 text-base"
-      />
-      <div className="absolute right-3 top-3 flex items-center gap-3">
-        <button className="p-2 text-stone-500 hover:text-stone-400 transition-colors">
-          <Paperclip size={18} />
-        </button>
-        <button className="p-2 text-stone-500 hover:text-stone-400 transition-colors">
-          <Mic size={18} />
-        </button>
-        <div className="relative flex items-center gap-2 text-stone-500">
-          <AlertTriangle size={16} />
-          <span className="text-sm">{selectedModel}</span>
-          <button
-            onClick={() => setIsDropdownOpen((prev) => !prev)}
-            className="p-1 text-stone-500 hover:text-stone-400 transition-colors"
-            title="Select model"
-          >
-            <ChevronDown size={14} className={`${isDropdownOpen ? 'rotate-180' : ''} transition-transform`} />
-          </button>
-          {isDropdownOpen && (
-            <div className="absolute top-8 right-0 z-10 bg-stone-800 border border-stone-700 rounded-lg shadow-lg w-40">
-              {['Model 1', 'Model 2'].map((model) => (
-                <button
-                  key={model}
-                  onClick={() => {
-                    handleModelSelect(model);
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`w-full px-4 py-2 text-sm text-left text-stone-300 hover:bg-stone-700 transition-colors ${selectedModel === model ? 'bg-stone-900 font-medium' : ''
-                    }`}
-                >
-                  {model}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <button
-          onClick={handleButtonClick}
-          className="p-2.5 bg-stone-700 hover:bg-stone-600 rounded-lg transition-colors"
-        >
-          <ArrowUp size={18} className="text-white" />
-        </button>
-      </div>
-    </div>
-  );
-});
 
 const LLMChatApp: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -133,9 +39,7 @@ const LLMChatApp: React.FC = () => {
       timestamp: new Date(),
     },
   ]);
-  const [activeSessionId, setActiveSessionId] = useState('1');
-  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  const toggleSidebar = useCallback(() => setIsSidebarMinimized((prev) => !prev), []);
+
   const [showFilePanel, setShowFilePanel] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -179,18 +83,6 @@ const LLMChatApp: React.FC = () => {
     }, 1000);
   }, [scrollToBottom]);
 
-  const handleNewChat = useCallback(() => {
-    const newSession: ChatSession = {
-      id: Date.now().toString(),
-      title: 'New Chat',
-      lastMessage: '',
-      timestamp: new Date(),
-    };
-    setChatSessions((prev) => [...prev, newSession]);
-    setActiveSessionId(newSession.id);
-    setMessages([]);
-    setShowFilePanel(false);
-  }, []);
 
 
   const EmptyState = () => (
@@ -357,75 +249,7 @@ const LLMChatApp: React.FC = () => {
   return (
     <div className="flex h-screen bg-black text-white">
       {/* Sidebar */}
-      <div
-        className={`bg-black border-r border-stone-800 flex flex-col transition-all duration-300 ${isSidebarMinimized ? 'w-16' : 'w-64'
-          }`}
-      >
-        <div className="p-4 flex items-center justify-between">
-          <button
-            onClick={handleNewChat}
-            className={`w-full flex items-center gap-2 px-3 py-2 text-stone-400 hover:text-stone-300 hover:bg-stone-900 rounded-lg transition-colors text-sm ${isSidebarMinimized ? 'hidden' : ''
-              }`}
-          >
-            <Plus size={16} />
-          </button>
-          <button
-            onClick={toggleSidebar}
-            className="p-1 text-stone-500 hover:text-stone-400 transition-colors"
-            title={isSidebarMinimized ? 'Maximize sidebar' : 'Minimize sidebar'}
-          >
-            {isSidebarMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
-          </button>
-        </div>
-
-        <div className={`flex-1 overflow-y-auto ${isSidebarMinimized ? 'hidden' : ''}`}>
-          <div className="px-2 flex flex-col h-full">
-            <div className="text-xs text-stone-600 px-3 py-2 font-medium">Tasks</div>
-            {chatSessions.map((session) => (
-              <button
-                key={session.id}
-                onClick={() => setActiveSessionId(session.id)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group text-sm ${activeSessionId === session.id
-                  ? 'bg-stone-900 text-white'
-                  : 'text-stone-400 hover:text-stone-300 hover:bg-stone-900'
-                  }`}
-              >
-                <span className="text-left truncate">{session.title}</span>
-                <MoreHorizontal
-                  size={14}
-                  className="text-stone-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className={`p-4 border-t border-stone-800 ${isSidebarMinimized ? 'hidden' : ''}`}>
-          <div className="bg-blue-950 border border-blue-900 rounded-lg p-4 mb-4">
-            <div className="text-sm font-medium text-white mb-1">Enterprise Demo</div>
-            <div className="text-xs text-blue-300 mb-3">AI employees for your company</div>
-            <button className="w-full bg-white text-black text-xs py-2 px-3 rounded-md font-medium hover:bg-stone-100 transition-colors">
-              Learn More
-            </button>
-            <div className="flex items-center gap-1 mt-3 text-xs text-blue-400">
-              <span>🔗</span>
-              <span>Join Our Team!</span>
-              <span>🚀</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-900 transition-colors cursor-pointer">
-            <div className="w-7 h-7 bg-orange-600 rounded-full flex items-center justify-center text-xs font-medium text-white">
-              S
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm text-white">Saif Khan</div>
-              <div className="text-xs text-stone-500 truncate">saifkhan50172@gmail.com</div>
-            </div>
-            <ChevronDown size={14} className="text-stone-600" />
-          </div>
-        </div>
-      </div>
+      <Sidebar setMessages={setMessages} setShowFilePanel={setShowFilePanel} />
 
       {/* Main Content */}
       <div className="flex-1 flex">
