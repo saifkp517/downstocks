@@ -196,8 +196,8 @@ const LLMChatApp: React.FC = () => {
   const EmptyState = () => (
     <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
       <div className="text-center mb-12">
-        <h1 className="text-5xl font-light text-white mb-3 drop-shadow-[0_2px_16px_rgba(186,0,255,0.7)]">
-          Welcome to <span className="font-normal text-purple-600 drop-shadow-[0_2px_16px_rgba(255,0,247,0.8)]">DownStocks AI</span>
+        <h1 className="text-5xl font-light text-gray-300 mb-3">
+          Welcome to <span className="font-normal text-white">DownStocks AI</span>
         </h1>
         <p className="text-stone-500 text-xl">What would you like to do today?</p>
       </div>
