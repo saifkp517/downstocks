@@ -40,6 +40,15 @@ interface ChatSession {
 
 // InputBar component (uncontrolled, memoized)
 const InputBar = memo(({ handleSendMessage }: { handleSendMessage: (value: string) => void }) => {
+
+  const [selectedModel, setSelectedModel] = useState('Model 1');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleModelSelect = useCallback((model: string) => {
+    setSelectedModel(model);
+    // Add logic to update the AI model if needed
+  }, []);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -75,11 +84,33 @@ const InputBar = memo(({ handleSendMessage }: { handleSendMessage: (value: strin
         <button className="p-2 text-stone-500 hover:text-stone-400 transition-colors">
           <Mic size={18} />
         </button>
-        <span className="text-orange-500 text-sm px-2">Upgrade for full performance</span>
-        <div className="flex items-center gap-2 text-stone-500">
+        <div className="relative flex items-center gap-2 text-stone-500">
           <AlertTriangle size={16} />
-          <span className="text-sm">Deepseek</span>
-          <ChevronDown size={14} />
+          <span className="text-sm">{selectedModel}</span>
+          <button
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
+            className="p-1 text-stone-500 hover:text-stone-400 transition-colors"
+            title="Select model"
+          >
+            <ChevronDown size={14} className={`${isDropdownOpen ? 'rotate-180' : ''} transition-transform`} />
+          </button>
+          {isDropdownOpen && (
+            <div className="absolute top-8 right-0 z-10 bg-stone-800 border border-stone-700 rounded-lg shadow-lg w-40">
+              {['Model 1', 'Model 2'].map((model) => (
+                <button
+                  key={model}
+                  onClick={() => {
+                    handleModelSelect(model);
+                    setIsDropdownOpen(false);
+                  }}
+                  className={`w-full px-4 py-2 text-sm text-left text-stone-300 hover:bg-stone-700 transition-colors ${selectedModel === model ? 'bg-stone-900 font-medium' : ''
+                    }`}
+                >
+                  {model}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <button
           onClick={handleButtonClick}
@@ -161,17 +192,12 @@ const LLMChatApp: React.FC = () => {
     setShowFilePanel(false);
   }, []);
 
-  const quickStarts = [
-    { icon: BarChart3, label: 'Market research dashboard', color: 'text-emerald-400' },
-    { icon: Rocket, label: 'Startup pitch deck', color: 'text-amber-400' },
-    { icon: Camera, label: 'Photography workflow', color: 'text-stone-400' },
-  ];
 
   const EmptyState = () => (
     <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
       <div className="text-center mb-12">
-        <h1 className="text-5xl font-light text-stone-400 mb-3">
-          Welcome to <span className="font-normal text-white">DownStocks AI</span>
+        <h1 className="text-5xl font-light text-white mb-3 drop-shadow-[0_2px_16px_rgba(186,0,255,0.7)]">
+          Welcome to <span className="font-normal text-purple-600 drop-shadow-[0_2px_16px_rgba(255,0,247,0.8)]">DownStocks AI</span>
         </h1>
         <p className="text-stone-500 text-xl">What would you like to do today?</p>
       </div>
@@ -180,23 +206,7 @@ const LLMChatApp: React.FC = () => {
         <InputBar handleSendMessage={handleSendMessage} />
       </div>
 
-      <div className="w-full max-w-3xl">
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-stone-500 text-sm">Quick starts</span>
-          <RefreshCw size={16} className="text-stone-500" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {quickStarts.map((item, index) => (
-            <button
-              key={index}
-              className="flex items-center gap-3 p-4 bg-stone-900 hover:bg-stone-850 rounded-xl transition-colors text-left border border-stone-800"
-            >
-              <item.icon size={18} className={item.color} />
-              <span className="text-stone-400 text-sm">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 
@@ -376,8 +386,8 @@ const LLMChatApp: React.FC = () => {
                 key={session.id}
                 onClick={() => setActiveSessionId(session.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group text-sm ${activeSessionId === session.id
-                    ? 'bg-stone-900 text-white'
-                    : 'text-stone-400 hover:text-stone-300 hover:bg-stone-900'
+                  ? 'bg-stone-900 text-white'
+                  : 'text-stone-400 hover:text-stone-300 hover:bg-stone-900'
                   }`}
               >
                 <span className="text-left truncate">{session.title}</span>
