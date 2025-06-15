@@ -7,6 +7,8 @@ import {
   Monitor,
   Eye,
   Code,
+  ToggleLeftIcon,
+  ToggleRightIcon
 } from 'lucide-react';
 import Sidebar from '@/components/SideBar';
 import { InputBar } from '@/components/InputBar';
@@ -104,7 +106,20 @@ const LLMChatApp: React.FC = () => {
 
   const ChatMessages = () => (
     <div className="flex-1 flex flex-col">
-      <div className="flex-1 overflow-y-auto p-8">
+      {/* Navbar */}
+      <div className="bg-black border-b border-stone-800 p-4 flex items-center">
+        <button
+          onClick={() => setShowFilePanel(!showFilePanel)}
+          className="p-2 text-stone-500 hover:text-stone-400 hover:bg-stone-900 rounded transition-colors"
+          title="Toggle sidebar"
+          aria-label="Toggle sidebar"
+        >
+          {showFilePanel ? <ToggleRightIcon size={20} /> : <ToggleLeftIcon size={20} />}
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-8 scrollbar-thin scrollbar-stone-600  scrollbar-thumb-hover-stone-400">
         {messages.map((message) => (
           <div key={message.id} className={`mb-8 ${message.isUser ? 'flex justify-end' : ''}`}>
             <div className={`max-w-4xl ${message.isUser ? 'bg-stone-800 text-white rounded-2xl px-6 py-4' : ''}`}>
@@ -176,14 +191,16 @@ const LLMChatApp: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input Bar */}
       <div className="px-8 pb-8 pt-4">
         <InputBar handleSendMessage={handleSendMessage} />
       </div>
     </div>
   );
 
-  const FilePanel = () => (
-    <div className="w-96 bg-black border-l border-stone-800 flex flex-col">
+
+  const FilePanel: React.FC<{ className?: string }> = ({ className = '' }) => (
+    <div className={`w-96 bg-black border-l border-stone-800 flex flex-col ${className}`}>
       <div className="px-4 py-3 border-b border-stone-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Monitor size={14} className="text-stone-500" />
@@ -252,9 +269,18 @@ const LLMChatApp: React.FC = () => {
       <Sidebar setMessages={setMessages} setShowFilePanel={setShowFilePanel} />
 
       {/* Main Content */}
-      <div className="flex-1 flex">
-        {messages.length === 0 ? <EmptyState /> : <ChatMessages />}
-        {showFilePanel && <FilePanel />}
+      <div className="flex-1 flex relative chat-container w-full h-full">
+        {messages.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <ChatMessages />
+        )}
+        {showFilePanel && (
+          <FilePanel
+            className={`file-panel fixed md:static top-0 right-0 h-full w-full md:w-auto shadow-lg md:shadow-none z-10 transform transition-transform duration-300 ease-in-out ${showFilePanel ? 'translate-x-0' : 'translate-x-full'
+              } md:translate-x-0`}
+          />
+        )}
       </div>
     </div>
   );
